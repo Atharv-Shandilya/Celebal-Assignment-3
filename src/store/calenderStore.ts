@@ -128,11 +128,18 @@ export const useCalenderStore = create<CalenderStore>()((set) => {
         i < daysInMonth(month, year) + firstDayOfMonth(year, month);
         i++
       ) {
+        let currentDate = i - firstDayOfMonth(year, month) + 1;
+        if (currentDate <= 0) currentDate = 0;
+
         if (i % 7 != 0) {
-          dates[Math.floor(i / 7)].push(i - firstDayOfMonth(year, month) + 1);
+          dates[Math.floor(i / 7)].push(currentDate);
         } else {
-          dates[Math.floor(i / 7)] = [i - firstDayOfMonth(year, month) + 1];
+          dates[Math.floor(i / 7)] = [currentDate];
         }
+      }
+
+      for (let i = dates[dates.length - 1].length; i < 7; i++) {
+        dates[dates.length - 1].push(0);
       }
       return dates;
     },

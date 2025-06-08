@@ -33,7 +33,7 @@ export default () => {
   const dates: number[][] = getDates(calender.month, calender.year);
 
   return (
-    <article className="w-full max-w-[300px] p-4 border rounded-lg h-min mr-2">
+    <article className="w-full max-w-[300px] p-4 border-[0.5px] border-black/20 rounded-lg h-min mr-2">
       <header className="flex justify-between [&>*]:cursor-pointer px-4 mb-4">
         <button
           onClick={() => {
@@ -72,7 +72,9 @@ export default () => {
           {dates.map((week, i) => (
             <div
               className={`
-                grid grid-cols-7 text-center mb-2 gap-x-2 h-[32px] 
+                grid grid-cols-7 text-center ${
+                  i != dates.length - 1 ? "mb-2" : ""
+                } gap-x-2 h-[32px] 
                 ${
                   current.week == i &&
                   current.month == calender.month &&
@@ -83,13 +85,16 @@ export default () => {
               `}
               key={i}
             >
-              {week.map((date) => (
+              {week.map((date, j) => (
                 <span
-                  key={date}
+                  key={`${date + "" + i + "" + j}`}
                   onClick={() => {
-                    setCurrent(date, i, calender.month, calender.year);
+                    if (date != 0)
+                      setCurrent(date, i, calender.month, calender.year);
                   }}
-                  className={`cursor-pointer rounded-full flex justify-center items-center
+                  className={`
+                    ${date != 0 ? "cursor-pointer" : ""} 
+
                     ${
                       date == today.date &&
                       today.month == calender.month &&
@@ -105,6 +110,10 @@ export default () => {
                         ? "bg-blue-200 text-black"
                         : ""
                     }
+
+                  rounded-full flex justify-center items-center
+                  
+
                     `}
                 >
                   {date > 0 ? date : ""}
