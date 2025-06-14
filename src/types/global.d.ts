@@ -4,3 +4,8 @@ export interface EventI {
   start: number;
   end: number;
 }
+
+export interface SelectedScheduleTimeI {
+  time: string;
+  timePeriod: number;
+}

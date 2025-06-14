@@ -1,6 +1,6 @@
+import type { EventI } from "./../types/global.d";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { EventI } from "../types/global";
 
 interface CalenderStore {
   today: {
@@ -32,8 +32,10 @@ interface CalenderStore {
   getMonths: () => { full: string; short: string }[];
   getMonthName: (month: number) => { full: string; short: string };
   getWeeks: () => { short1: string; short2: string; full: string }[];
-
+  getNextScheduledTime: (currHour: number) => number;
   addEvent: (event: EventI, date: number) => void;
+  editEvent: (key: string, event: EventI) => void;
+  deleteEvent: (key: string, startHour: number) => void;
 }
 
 function isLeapYear(year: number) {
@@ -172,6 +174,23 @@ export const useCalenderStore = create<CalenderStore>()(
 
         getMonthName: (month) => get().getMonths()[month],
 
+        getNextScheduledTime: (currHour) => {
+          let nextScheduledTime = 24;
+          const getEvents = useCalenderStore((state) => state.eventByDates);
+
+          const dateEvent =
+            getEvents[
+              `${get().current.year}-${get().current.month}-${
+                get().current.date
+              }`
+            ];
+
+          if (dateEvent) {
+            const i = dateEvent.findIndex((elem) => currHour < elem.end);
+            if (i != -1) nextScheduledTime = dateEvent[i].start;
+          }
+          return nextScheduledTime;
+        },
         getWeeks: () => [
           { short1: "Su", short2: "SUN", full: "Sunday" },
           { short1: "Mo", short2: "MON", full: "Monday" },
@@ -208,6 +227,36 @@ export const useCalenderStore = create<CalenderStore>()(
               },
             };
           });
+        },
+
+        editEvent: (key, event) => {
+          const eventsOfDay = get().eventByDates[key];
+          const idx = eventsOfDay.findIndex((v) => v.start == event.start);
+          const newA = [...get().eventByDates[key]];
+          newA[idx] = { ...event, event: event.event, end: event.end };
+          set((state) => ({
+            ...state,
+            eventByDates: {
+              ...state.eventByDates,
+              [key]: [...newA],
+            },
+          }));
+        },
+
+        deleteEvent: (key, startHour) => {
+          const eventsOfDay = get().eventByDates[key];
+          const idx = eventsOfDay.findIndex((v) => v.start == startHour);
+
+          set((state) => ({
+            ...state,
+            eventByDates: {
+              ...state.eventByDates,
+              [key]: [
+                ...state.eventByDates[key].slice(0, idx),
+                ...state.eventByDates[key].slice(idx + 1),
+              ],
+            },
+          }));
         },
       };
     },

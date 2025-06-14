@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCalenderStore } from "../../store/calenderStore";
 import AddEventModal from "./AddEventModal";
+import EditEvent from "./EditEvent";
 
 export default () => {
   const current = useCalenderStore((state) => state.current);
@@ -15,7 +16,6 @@ export default () => {
   //udpate Time for live pointer
   useEffect(() => {
     const timeUpdate = setTimeout(() => {
-      console.log("time updated");
       setCurrTime(new Date());
     }, 1000);
 
@@ -48,6 +48,9 @@ export default () => {
     date: number;
     hour: number;
   } | null>(null);
+
+  const [editFirstHalf, setEditFirstHalf] = useState(-1);
+  const [editSecondHalf, setEditSecondHalf] = useState(-1);
 
   return (
     <section className="flex-1  pb-[100px] px-2 relative">
@@ -128,72 +131,121 @@ export default () => {
                 >
                   {/*Hours Row*/}
                   {hours.map((hour) => {
-                    const eventOfDay =
-                      eventByDates[
-                        `${current.year}-${current.month}-${
-                          dates[current.week][i]
-                        }`
-                      ];
+                    const key = `${current.year}-${current.month}-${
+                      dates[current.week][i]
+                    }`;
+                    const eventOfDay = eventByDates[key];
 
-                    const event = eventOfDay
+                    const eventOfFirstHalf = eventOfDay
                       ? eventOfDay.find((curr) => curr.start == hour)
                       : null;
+
+                    const eventOfSecondHalf = eventOfDay
+                      ? eventOfDay.find((curr) => curr.start == hour + 0.5)
+                      : null;
+
                     return (
-                      <div
-                        key={hour}
-                        className={`min-h-[100px] border-b-[0.5px] border-b-black/20 ${
-                          dates[current.week][i] == 0 ? "" : "cursor-pointer"
-                        } relative`}
-                      >
-                        {dates[current.week][i] != 0 && (
-                          <>
-                            <span
-                              className="absolute top-0 bottom-1/2 left-0 right-0 hover:bg-black/5"
-                              onClick={() => {
-                                setEventOfDate({
-                                  date: dates[current.week][i],
-                                  hour: hour,
-                                });
-                              }}
-                            ></span>
-                            <span
-                              className="absolute top-1/2 bottom-0 left-0 right-0 hover:bg-black/5"
-                              onClick={() => {
-                                setEventOfDate({
-                                  date: dates[current.week][i],
-                                  hour: hour + 0.5,
-                                });
-                              }}
-                            ></span>
-                          </>
-                        )}
-
-                        {event && (
-                          <div
-                            style={{
-                              height: (event.end - event.start) * 100 + "px",
-                            }}
-                            className={`absolute ${
-                              event.start - Math.floor(event.start) > 0
-                                ? "top-1/2"
-                                : "top-0"
-                            } left-[2px] right-[2px] bg-gray-200 p-2 rounded-lg z-10  overflow-auto`}
-                          >
-                            <p className="text-sm ">{event.event}</p>
-                          </div>
-                        )}
-
-                        {hour == currTime.getHours() &&
-                          dates[current.week][i] == today.date && (
-                            <div
-                              ref={currentMarker}
-                              className="absolute h-[2px] w-full bg-red-400"
-                              style={{
-                                top: (currTime.getMinutes() / 60) * 100,
-                              }}
-                            ></div>
+                      <section key={hour}>
+                        <div
+                          className={`min-h-[100px] border-b-[0.5px] border-b-black/20 ${
+                            dates[current.week][i] == 0 ? "" : "cursor-pointer"
+                          } relative`}
+                        >
+                          {dates[current.week][i] != 0 && (
+                            <>
+                              <span
+                                className="absolute top-0 bottom-1/2 left-0 right-0 hover:bg-black/5"
+                                onClick={() => {
+                                  setEventOfDate({
+                                    date: dates[current.week][i],
+                                    hour: hour,
+                                  });
+                                }}
+                              ></span>
+                              <span
+                                className="absolute top-1/2 bottom-0 left-0 right-0 hover:bg-black/5"
+                                onClick={() => {
+                                  setEventOfDate({
+                                    date: dates[current.week][i],
+                                    hour: hour + 0.5,
+                                  });
+                                }}
+                              ></span>
+                            </>
                           )}
-                      </div>
+                          {/*Event Overlay over schedule */}
+                          {eventOfFirstHalf && (
+                            <div
+                              style={{
+                                height:
+                                  (eventOfFirstHalf.end -
+                                    eventOfFirstHalf.start) *
+                                    100 +
+                                  "px",
+                              }}
+                              className={`absolute top-0 left-[2px] right-[2px] bg-gray-200 p-2 rounded-lg z-10  overflow-hidden `}
+                              onClick={() => {
+                                setEditFirstHalf(eventOfFirstHalf.start);
+                              }}
+                            >
+                              <p className="text-sm ">
+                                {eventOfFirstHalf.event}
+                              </p>
+                            </div>
+                          )}
+
+                          {eventOfSecondHalf && (
+                            <div
+                              style={{
+                                height:
+                                  (eventOfSecondHalf.end -
+                                    eventOfSecondHalf.start) *
+                                    100 +
+                                  "px",
+                              }}
+                              className={`absolute top-1/2
+                                
+                              } left-[2px] right-[2px] bg-gray-200 p-2 rounded-lg z-10  overflow-hidden `}
+                              onClick={() => {
+                                setEditSecondHalf(eventOfSecondHalf.start);
+                              }}
+                            >
+                              <p className="text-sm ">
+                                {eventOfSecondHalf.event}
+                              </p>
+                            </div>
+                          )}
+
+                          {hour == currTime.getHours() &&
+                            dates[current.week][i] == today.date && (
+                              <div
+                                ref={currentMarker}
+                                className="absolute h-[2px] w-full bg-red-400"
+                                style={{
+                                  top: (currTime.getMinutes() / 60) * 100,
+                                }}
+                              ></div>
+                            )}
+                        </div>
+
+                        {eventOfFirstHalf &&
+                          editFirstHalf == eventOfFirstHalf.start && (
+                            <EditEvent
+                              event={eventOfFirstHalf}
+                              dateKey={key}
+                              close={setEditFirstHalf}
+                            />
+                          )}
+
+                        {eventOfSecondHalf &&
+                          editSecondHalf == eventOfSecondHalf.start && (
+                            <EditEvent
+                              event={eventOfSecondHalf}
+                              dateKey={key}
+                              close={setEditSecondHalf}
+                            />
+                          )}
+                      </section>
                     );
                   })}
                 </div>
@@ -205,7 +257,6 @@ export default () => {
       {eventOfDate && (
         <AddEventModal
           currHour={eventOfDate.hour}
-          nextScheduledTime={24}
           setEventOfDate={setEventOfDate}
         />
       )}

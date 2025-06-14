@@ -16,9 +16,6 @@ export default () => {
   const getMonth = useCalenderStore((state) => state.getMonthName);
   const getWeeks = useCalenderStore((state) => state.getWeeks);
 
-  const getTime = new Date().getHours();
-  console.log(getTime);
-
   //Updates the Date at every midnight
   useEffect(() => {
     const now = new Date();
@@ -108,9 +105,8 @@ export default () => {
                         : ""
                     }
 
-                  
+                  rounded-full flex justify-center items-center cursor-default
 
-                  rounded-full flex justify-center items-center
                     `}
                 >
                   {date > 0 ? date : ""}

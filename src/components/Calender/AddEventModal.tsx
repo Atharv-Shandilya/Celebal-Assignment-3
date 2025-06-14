@@ -1,15 +1,17 @@
 import { IoClose } from "react-icons/io5";
 import { useCalenderStore } from "../../store/calenderStore";
-import { FaArrowRight, FaCalendar, FaClock } from "react-icons/fa6";
+import { FaCalendar } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 import { v4 } from "uuid";
+import TimePicker from "./TimePicker";
+import type { SelectedScheduleTimeI } from "../../types/global";
 
 export default ({
   currHour,
   setEventOfDate,
 }: {
   currHour: number;
-  nextScheduledTime: number;
+
   setEventOfDate: React.Dispatch<
     React.SetStateAction<{
       date: number;
@@ -32,35 +34,14 @@ export default ({
     }
   });
 
-  let nextScheduledTime = 24;
-  const getEvents = useCalenderStore((state) => state.eventByDates);
-
-  const dateEvent =
-    getEvents[`${current.year}-${current.month}-${current.date}`];
-
-  if (dateEvent) {
-    const i = dateEvent.findIndex((elem) => currHour < elem.end);
-    console.log(i);
-    if (i != -1) nextScheduledTime = dateEvent[i].start;
-    console.log(nextScheduledTime);
-  }
-
-  //Dropdown Properites
-  const [openDropDown, setDropDown] = useState(false);
-  const timePeriod = Array.from(
-    { length: (24 - currHour - (24 - nextScheduledTime)) * 2 },
-    (_, i) => {
-      const time = currHour + (i + 1) * 0.5;
-      return {
-        time: `${Math.floor(time)}:${
-          time - Math.floor(time) > 0 ? "30" : "00"
-        }`,
-        timePeriod: (i + 1) * 0.5,
-      };
-    }
+  //get Next Scheduled Time to prevent conflict
+  const getNextSchdeuledTime = useCalenderStore(
+    (prev) => prev.getNextScheduledTime
   );
-  const [selected, setSelected] = useState(timePeriod[0]);
+  let nextScheduledTime = getNextSchdeuledTime(currHour);
+
   const addEvent = useCalenderStore((state) => state.addEvent);
+  const [selected, setSelected] = useState<SelectedScheduleTimeI | null>(null);
 
   return (
     <>
@@ -97,52 +78,12 @@ export default ({
               {getMonth(current.month).short} {current.date}
             </p>
           </div>
-          <div className="flex items-center">
-            <p className="flex items-center border px-2 py-1 opacity-40 rounded-lg">
-              <FaClock className="mr-1" />{" "}
-              <span>
-                {currHour - Math.floor(currHour) > 0
-                  ? `${Math.floor(currHour)}:30`
-                  : `${Math.floor(currHour)}:00`}
-              </span>
-            </p>
-            <FaArrowRight className="mx-2" />
-            <p
-              className="flex items-center  border px-2 py-1 rounded-lg cursor-pointer relative"
-              onClick={() => {
-                setDropDown((prev) => !prev);
-              }}
-            >
-              <FaClock className="mr-1" />
-
-              <div>
-                <span className="mr-2">{selected.time}</span>
-                <span>({selected.timePeriod}hr)</span>
-              </div>
-
-              {openDropDown && (
-                <ul className="absolute top-[40px] left-0 border  bg-white max-h-[300px] overflow-scroll">
-                  {timePeriod.map((curr) => {
-                    return (
-                      <li
-                        className={`whitespace-nowrap py-1 px-3 ${
-                          curr.timePeriod == selected.timePeriod
-                            ? "bg-black/20"
-                            : "hover:bg-black/10"
-                        }`}
-                        onClick={() => {
-                          setSelected(curr);
-                        }}
-                      >
-                        <span className="mr-2">{curr.time}</span>
-                        <span>({curr.timePeriod}hr)</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </p>
-          </div>
+          <TimePicker
+            currHour={currHour}
+            nextScheduledTime={nextScheduledTime}
+            selected={selected}
+            setSelected={setSelected}
+          />
         </section>
         <section className="flex justify-end">
           <button
@@ -156,15 +97,16 @@ export default ({
           <button
             className="border px-4 py-1 rounded-lg cursor-pointer"
             onClick={() => {
-              addEvent(
-                {
-                  id: v4(),
-                  event: event,
-                  start: currHour,
-                  end: currHour + selected.timePeriod,
-                },
-                current.date
-              );
+              if (selected)
+                addEvent(
+                  {
+                    id: v4(),
+                    event: event,
+                    start: currHour,
+                    end: currHour + selected.timePeriod,
+                  },
+                  current.date
+                );
               setEventOfDate(null);
             }}
           >
