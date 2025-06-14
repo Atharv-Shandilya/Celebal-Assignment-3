@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { EventI } from "../types/global";
 
 interface CalenderStore {
   today: {
@@ -20,13 +22,18 @@ interface CalenderStore {
     year: number;
   };
 
-  updateToday: () => void;
+  eventByDates: Record<string, EventI[]>;
 
+  updateToday: () => void;
   setCalender: (month: number, year: number) => void;
   setCurrent: (date: number, week: number, month: number, year: number) => void;
+
   getDates: (month: number, year: number) => number[][];
-  getMonth: (month: number) => { full: string; short: string };
-  getWeeks: () => { short1: string; short2: string }[];
+  getMonths: () => { full: string; short: string }[];
+  getMonthName: (month: number) => { full: string; short: string };
+  getWeeks: () => { short1: string; short2: string; full: string }[];
+
+  addEvent: (event: EventI, date: number) => void;
 }
 
 function isLeapYear(year: number) {
@@ -45,129 +52,169 @@ const daysInMonth = (month: number, year: number) =>
 const getWeek = (date: number, month: number, year: number) =>
   Math.floor((date - 1 + firstDayOfMonth(year, month)) / 7);
 
-export const useCalenderStore = create<CalenderStore>()((set) => {
-  const today = {
-    date: new Date().getDate(),
-    month: new Date().getMonth(),
-    year: new Date().getFullYear(),
-  };
-  const todayWeek = getWeek(today.date, today.month, today.year);
+export const useCalenderStore = create<CalenderStore>()(
+  persist(
+    (set, get) => {
+      const today = {
+        date: new Date().getDate(),
+        month: new Date().getMonth(),
+        year: new Date().getFullYear(),
+      };
+      const todayWeek = getWeek(today.date, today.month, today.year);
 
-  return {
-    today: {
-      ...today,
-      week: todayWeek,
-    },
-
-    current: {
-      date: today.date,
-      month: today.month,
-      year: today.year,
-      week: todayWeek,
-    },
-
-    calender: {
-      month: today.month,
-      year: today.year,
-    },
-
-    updateToday: () => {
-      set((state) => {
-        const newDate = new Date();
-        if (
-          newDate.getDate() != state.today.date ||
-          newDate.getMonth() != state.today.month ||
-          newDate.getFullYear() != state.today.year
-        )
-          return {
-            ...state,
-            today: {
-              date: newDate.getDate(),
-              month: newDate.getMonth(),
-              week: getWeek(
-                newDate.getDate(),
-                newDate.getMonth(),
-                newDate.getFullYear()
-              ),
-              year: newDate.getFullYear(),
-            },
-          };
-
-        return state;
-      });
-    },
-
-    setCalender: (month, year) => {
-      set((state) => {
-        return {
-          ...state,
-          calender: {
-            month,
-            year,
-          },
-        };
-      });
-    },
-
-    setCurrent: (date, week, month, year) => {
-      set((state) => ({
-        ...state,
-        current: {
-          date,
-          month: month,
-          year: year,
-          week,
+      return {
+        today: {
+          ...today,
+          week: todayWeek,
         },
-      }));
+
+        current: {
+          date: today.date,
+          month: today.month,
+          year: today.year,
+          week: todayWeek,
+        },
+
+        calender: {
+          month: today.month,
+          year: today.year,
+        },
+
+        eventByDates: {},
+
+        updateToday: () => {
+          set((state) => {
+            const newDate = new Date();
+            if (
+              newDate.getDate() != state.today.date ||
+              newDate.getMonth() != state.today.month ||
+              newDate.getFullYear() != state.today.year
+            )
+              return {
+                ...state,
+                today: {
+                  date: newDate.getDate(),
+                  month: newDate.getMonth(),
+                  week: getWeek(
+                    newDate.getDate(),
+                    newDate.getMonth(),
+                    newDate.getFullYear()
+                  ),
+                  year: newDate.getFullYear(),
+                },
+              };
+
+            return state;
+          });
+        },
+
+        setCalender: (month, year) => {
+          set((state) => {
+            return {
+              ...state,
+              calender: {
+                month,
+                year,
+              },
+            };
+          });
+        },
+
+        setCurrent: (date, week, month, year) => {
+          set((state) => ({
+            ...state,
+            current: {
+              date,
+              month: month,
+              year: year,
+              week,
+            },
+          }));
+        },
+
+        getDates: (month, year) => {
+          let dates: number[][] = [];
+          for (
+            let i = 0;
+            i < daysInMonth(month, year) + firstDayOfMonth(year, month);
+            i++
+          ) {
+            let currentDate = i - firstDayOfMonth(year, month) + 1;
+            if (currentDate <= 0) currentDate = 0;
+
+            if (i % 7 != 0) {
+              dates[Math.floor(i / 7)].push(currentDate);
+            } else {
+              dates[Math.floor(i / 7)] = [currentDate];
+            }
+          }
+
+          for (let i = dates[dates.length - 1].length; i < 7; i++) {
+            dates[dates.length - 1].push(0);
+          }
+          return dates;
+        },
+
+        getMonths: () => [
+          { full: "January", short: "Jan" },
+          { full: "February", short: "Feb" },
+          { full: "March", short: "Mar" },
+          { full: "April", short: "Apr" },
+          { full: "May", short: "May" },
+          { full: "June", short: "Jun" },
+          { full: "July", short: "Jul" },
+          { full: "August", short: "Aug" },
+          { full: "September", short: "Sep" },
+          { full: "October", short: "Oct" },
+          { full: "November", short: "Nov" },
+          { full: "December", short: "Dec" },
+        ],
+
+        getMonthName: (month) => get().getMonths()[month],
+
+        getWeeks: () => [
+          { short1: "Su", short2: "SUN", full: "Sunday" },
+          { short1: "Mo", short2: "MON", full: "Monday" },
+          { short1: "Tu", short2: "TUE", full: "Tuesday" },
+          { short1: "We", short2: "WED", full: "Wednesday" },
+          { short1: "Th", short2: "THU", full: "Thursday" },
+          { short1: "Fr", short2: "FRI", full: "Friday" },
+          { short1: "Sa", short2: "SAT", full: "Saturday" },
+        ],
+
+        addEvent: (event, date) => {
+          set((state) => {
+            const key = `${state.calender.year}-${state.calender.month}-${date}`;
+
+            if (state.eventByDates[key] == null) {
+              return {
+                ...state,
+                eventByDates: {
+                  ...state.eventByDates,
+                  [key]: [event],
+                },
+              };
+            }
+            const dateArray = [...state.eventByDates[key]];
+            const i = dateArray.findIndex((el) => el.end > event.start);
+            if (i != -1) dateArray.splice(i, 0, event);
+            else dateArray.push(event);
+
+            return {
+              ...state,
+              eventByDates: {
+                ...state.eventByDates,
+                [key]: [...dateArray],
+              },
+            };
+          });
+        },
+      };
     },
-
-    getDates: (month, year) => {
-      let dates: number[][] = [];
-      for (
-        let i = 0;
-        i < daysInMonth(month, year) + firstDayOfMonth(year, month);
-        i++
-      ) {
-        let currentDate = i - firstDayOfMonth(year, month) + 1;
-        if (currentDate <= 0) currentDate = 0;
-
-        if (i % 7 != 0) {
-          dates[Math.floor(i / 7)].push(currentDate);
-        } else {
-          dates[Math.floor(i / 7)] = [currentDate];
-        }
-      }
-
-      for (let i = dates[dates.length - 1].length; i < 7; i++) {
-        dates[dates.length - 1].push(0);
-      }
-      return dates;
-    },
-
-    getMonth: (month) =>
-      [
-        { full: "January", short: "Jan" },
-        { full: "February", short: "Feb" },
-        { full: "March", short: "Mar" },
-        { full: "April", short: "Apr" },
-        { full: "May", short: "May" },
-        { full: "June", short: "Jun" },
-        { full: "July", short: "Jul" },
-        { full: "August", short: "Aug" },
-        { full: "September", short: "Sep" },
-        { full: "October", short: "Oct" },
-        { full: "November", short: "Nov" },
-        { full: "December", short: "Dec" },
-      ][month],
-
-    getWeeks: () => [
-      { short1: "Su", short2: "SUN" },
-      { short1: "Mo", short2: "MON" },
-      { short1: "Tu", short2: "TUE" },
-      { short1: "We", short2: "WED" },
-      { short1: "Th", short2: "THU" },
-      { short1: "Fr", short2: "FRI" },
-      { short1: "Sa", short2: "SAT" },
-    ],
-  };
-});
+    {
+      name: "calender-event",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ eventByDates: state.eventByDates }),
+    }
+  )
+);

@@ -3,7 +3,7 @@ import CalenderScheduler from "./CalenderScheduler";
 
 export default () => {
   return (
-    <article className="flex h-full ">
+    <article className="flex h-full flex-1">
       <Calender />
       <CalenderScheduler />
     </article>

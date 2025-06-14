@@ -13,10 +13,13 @@ export default () => {
   const setCurrent = useCalenderStore((state) => state.setCurrent);
 
   const getDates = useCalenderStore((state) => state.getDates);
-  const getMonth = useCalenderStore((state) => state.getMonth);
+  const getMonth = useCalenderStore((state) => state.getMonthName);
   const getWeeks = useCalenderStore((state) => state.getWeeks);
 
-  //Updates the Date at midnight
+  const getTime = new Date().getHours();
+  console.log(getTime);
+
+  //Updates the Date at every midnight
   useEffect(() => {
     const now = new Date();
     const midnight = new Date(now);
@@ -62,13 +65,14 @@ export default () => {
           <FaAngleRight />
         </button>
       </header>
-      <section className="a">
+      <section>
         <header className="grid grid-cols-7 text-center mb-2 gap-x-2">
           {getWeeks().map((v) => {
             return <div key={v.short1}>{v.short1}</div>;
           })}
         </header>
         <section>
+          {/*Weeks Row */}
           {dates.map((week, i) => (
             <div
               className={`
@@ -85,6 +89,7 @@ export default () => {
               `}
               key={i}
             >
+              {/*Dates in a week */}
               {week.map((date, j) => (
                 <span
                   key={`${date + "" + i + "" + j}`}
@@ -103,17 +108,9 @@ export default () => {
                         : ""
                     }
 
-                    ${
-                      date == current.date &&
-                      current.month == calender.month &&
-                      current.year == calender.year
-                        ? "bg-blue-200 text-black"
-                        : ""
-                    }
-
-                  rounded-full flex justify-center items-center
                   
 
+                  rounded-full flex justify-center items-center
                     `}
                 >
                   {date > 0 ? date : ""}
