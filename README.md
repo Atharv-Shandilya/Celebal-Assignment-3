@@ -3,6 +3,9 @@
 A modern, interactive Kanban dashboard built with **React**, **TypeScript**, **Vite**, and **Zustand**.  
 This project lets you visually manage tasks across customizable stages, analyze task distribution by priority, and gain insights with interactive charts and tables.
 
+[live link](https://celebalassignment3and4.netlify.app/)
+
+
 ---
 
 ## ✨ Features
