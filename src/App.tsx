@@ -5,6 +5,7 @@ import CalenderPage from "./components/Calender/CalenderPage";
 import NavMenu from "./components/UI/NavMenu";
 import KanbanPage from "./components/Kanban/KanbanPage";
 import { MdOutlineTaskAlt } from "react-icons/md";
+import HomePage from "./components/Home/HomePage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       </nav>
 
       <Routes>
+        <Route path="/" index element={<HomePage />} />
         <Route path="calender" element={<CalenderPage />} />
         <Route path="kanban" element={<KanbanPage />} />
       </Routes>
