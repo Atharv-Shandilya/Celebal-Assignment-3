@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router";
+import { Route, Routes } from "react-router";
 import { FaCalendar, FaHome } from "react-icons/fa";
 import "./App.css";
 import CalenderPage from "./components/Calender/CalenderPage";

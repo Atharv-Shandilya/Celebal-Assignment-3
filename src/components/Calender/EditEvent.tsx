@@ -1,4 +1,4 @@
-import { MdModeEdit, MdDelete, MdClose } from "react-icons/md";
+import { MdDelete, MdClose } from "react-icons/md";
 import type { EventI, SelectedScheduleTimeI } from "../../types/global";
 import EditMenuItems from "../UI/EditMenuItems";
 import { useCalenderStore } from "../../store/calenderStore";

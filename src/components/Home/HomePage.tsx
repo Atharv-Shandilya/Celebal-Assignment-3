@@ -109,7 +109,7 @@ export default () => {
                   `${name}: ${value}`
                 }
               >
-                {priorityPieData.map((entry, idx) => (
+                {priorityPieData.map((entry) => (
                   <Cell
                     key={entry.name}
                     fill={PRIORITY_COLORS[entry.name] || "#8884d8"}

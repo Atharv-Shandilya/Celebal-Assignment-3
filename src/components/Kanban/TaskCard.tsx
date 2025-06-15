@@ -1,5 +1,3 @@
-import { FaCheck } from "react-icons/fa6";
-
 import { RiDeleteBin6Line, RiPencilLine } from "react-icons/ri";
 import { useEffect, useRef, useState, type Ref } from "react";
 import { useProjectStore } from "../../store/projectStore";
